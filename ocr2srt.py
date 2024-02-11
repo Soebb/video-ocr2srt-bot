@@ -47,7 +47,7 @@ def ocr(video, out):
     modelFilePath = "frozen_east_text_detection.pb"
 
     # Configuring Pytesseract to use the correct language model
-    pytesseractLanguage = "fas"
+    pytesseractLanguage = "eng"
 
     # Configuring Pytesseract to blacklist letters
     pytesseractBlacklist = '@^¨#$«|{}_ı[]°<>»%=+´`§*'
