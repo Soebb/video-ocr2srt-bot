@@ -1,0 +1,10 @@
+pyrogram
+tgcrypto
+python-dotenv
+srt
+pytesseract
+opencv-python
+imutils
+numpy
+tqdm
+requests
