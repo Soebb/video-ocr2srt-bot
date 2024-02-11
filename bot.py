@@ -38,12 +38,12 @@ async def start(bot, update):
     )
 
 
-@Bot.on_message(filters.private & filters.media)
+@Bot.on_message(filters.private & filters.video)
 async def from_tg_files(_, m):
     msg = await m.reply("Downloading..")
     media = await m.download()
     await msg.edit_text("Processing..")
-    output_name = .rsplit('.', 1)[0] + ".srt"
+    output_name = os.path.basename(media).rsplit('.', 1)[0] + ".srt"
     ocr(media, output_name)
     await m.reply_document(output_name)
     await msg.delete()
