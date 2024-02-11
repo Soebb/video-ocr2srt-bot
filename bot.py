@@ -1,25 +1,23 @@
-import os, shutil
+import os
 from dotenv import load_dotenv
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from subsai import SubsAI
+from ocr2srt import ocr
 
 load_dotenv()
 
 Bot = Client(
-    "PersianTranscriberBot",
+    "videocrBot",
     bot_token = os.environ["BOT_TOKEN"],
     api_id = int(os.environ["API_ID"]),
     api_hash = os.environ["API_HASH"]
 )
 
-subs_ai = SubsAI()
-model = subs_ai.create_model('guillaumekln/faster-whisper', {'model_type': 'base'})
 
 START_TXT = """
-Hi {}, I'm Persian transcriber Bot.
+Hi {}, I'm Video subtitle extractor.
 
-Send a media(video/audio) or a YouTube URL or path of a local file in your system.
+Send a video with hard-coded subtitle"
 """
 
 START_BTN = InlineKeyboardMarkup(
@@ -45,9 +43,8 @@ async def from_tg_files(_, m):
     msg = await m.reply("Downloading..")
     media = await m.download()
     await msg.edit_text("Processing..")
-    subs = subs_ai.transcribe(media, model)
-    output_name = "out.srt"
-    subs.save(output_name)
+    output_name = .rsplit('.', 1)[0] + ".srt"
+    ocr(media, output_name)
     await m.reply_document(output_name)
     await msg.delete()
     os.remove(output_name)
