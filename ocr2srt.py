@@ -1,6 +1,4 @@
-import argparse
 import srt
-import json
 import pytesseract
 import cv2
 from imutils.object_detection import non_max_suppression
@@ -43,16 +41,20 @@ def decode_predictions(scores, geometry):
     return rects, confidences
 
 
-def main(args):
+def ocr(video, out):
     # Define paths for the video file and the pre-trained model file.
-    videoFilePath = args.video
-    modelFilePath = args.model
+    videoFilePath = video
+    modelFilePath = "frozen_east_text_detection.pb"
 
     # Configuring Pytesseract to use the correct language model
-    pytesseractLanguage = args.language
+    pytesseractLanguage = "fas"
 
     # Configuring Pytesseract to blacklist letters
-    pytesseractBlacklist = args.blacklist
+    pytesseractBlacklist = '@^¨#$«|{}_ı[]°<>»%=+´`§*'
+
+    # Number of frames to skip for processing
+    frame_rate = 10
+    output_srt_filename = out
 
     # Layer names from pre-trained EAST text detector model to extract scores and geometry data.
     layerNames = [
@@ -79,9 +81,6 @@ def main(args):
     # Create an empty list to hold the subtitles.
     subtitles = []
 
-    # Create an empty list to hold the JSON data.
-    json_output = []
-
     # Main loop for processing the video frames.
     while True:
         frame_count += 1
@@ -90,7 +89,7 @@ def main(args):
             break
 
         # Applying EAST text detector and OCR to every nth frame of the video, where n is defined by args.frame_rate.
-        if frame_count % args.frame_rate != 0:
+        if frame_count % frame_rate != 0:
             continue
 
         orig = frame.copy()
@@ -116,7 +115,7 @@ def main(args):
 
             # Define the timing and length for each subtitle object.
             start_time_ms = stream.get(cv2.CAP_PROP_POS_MSEC)
-            end_time_ms = start_time_ms + ((args.frame_rate / video_fps) * 1000)
+            end_time_ms = start_time_ms + ((frame_rate / video_fps) * 1000)
 
             # Create a new Subtitle object and add it to the list of subtitles.
             subtitle = srt.Subtitle(index=frame_count,
@@ -130,6 +129,7 @@ def main(args):
             # Calculate average confidence score for detection
             average_detection_confidence = sum(confidences) / len(confidences)
 
+            """
             # Append data to json_output list
             json_output.append({
                 'frame_number': frame_count,
@@ -138,7 +138,7 @@ def main(args):
                 'ocr_text': text,
                 'ocr_confidence': confidence_tesseract  # The confidence of the OCR string
             })
-
+            """
         # Draw bounding boxes around text areas on the original frame.
         for (startX, startY, endX, endY) in boxes:
             startX = int(startX * rW)
@@ -147,12 +147,8 @@ def main(args):
             endY = int(endY * rH)
             cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 1)
 
-        # Display a video preview with bounding boxes if the preview is enabled.
-        if args.preview:
-            cv2.imshow("Preview", orig)
-
         # Update progress bar.
-        progress_bar.update(args.frame_rate)
+        progress_bar.update(frame_rate)
 
         # Exit the loop if 'q' key is pressed.
         if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -163,9 +159,6 @@ def main(args):
     stream.release()
     cv2.destroyAllWindows()
 
-    # Define the output filename for the SRT file.
-    output_srt_filename = videoFilePath.rsplit('.', 1)[0] + "_" + pytesseractLanguage + "_" + datetime.now().strftime(
-        "%Y-%m-%d-%H-%M") + ".srt"
     print(f"Preparing to write SRT to file: {output_srt_filename}")
 
     # Try to write subtitles to the SRT file.
@@ -176,6 +169,7 @@ def main(args):
     except Exception as e:
         print(f"Error while writing SRT file: {e}")
 
+    """
     # Create a dictionary to hold additional JSON information
     extra_info = {
         'filename': videoFilePath,
@@ -185,6 +179,8 @@ def main(args):
         'character_blacklist': args.blacklist
     }
 
+    # Create an empty list to hold the JSON data.
+    json_output = []
     # Insert the extra_info dictionary at the beginning of the json_output list
     json_output.insert(0, extra_info)
 
@@ -193,6 +189,7 @@ def main(args):
         "%Y-%m-%d-%H-%M") + ".json"
     print(f"Preparing to write JSON to file: {output_json_filename}")
 
+    import json
     # Try to write JSON data to the file.
     try:
         with open(output_json_filename, 'w') as json_file:
@@ -200,16 +197,4 @@ def main(args):
         print("JSON file written successfully")
     except Exception as e:
         print(f"Error while writing JSON file: {e}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Extract text from video using OCR and generate SRT file')
-    parser.add_argument('-v', '--video', help='Path to the video file', required=True)
-    parser.add_argument('-m', '--model', help='Path to the pre-trained EAST text detector model', required=True)
-    parser.add_argument('-l', '--language', help='Language model for Pytesseract', default='eng')
-    parser.add_argument('-f', '--frame_rate', help='Number of frames to skip for processing', type=int, default=10)
-    parser.add_argument('-p', '--preview', help='Enable preview of the video with bounding boxes', action='store_true')
-    parser.add_argument('-b', '--blacklist', help='blacklist characters to improve OCR result', default='@^¨#$«|{}_ı[]°<>»%=+´`§*')
-    args = parser.parse_args()
-
-    main(args)
+    """
