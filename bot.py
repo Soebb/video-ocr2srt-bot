@@ -22,7 +22,7 @@ Send a video with hard-coded subtitle"
 
 START_BTN = InlineKeyboardMarkup(
         [[
-        InlineKeyboardButton('Source Code', url='https://github.com/soebb/persian-transcriber-bot'),
+        InlineKeyboardButton('Source Code', url='https://github.com/soebb'),
         ]]
     )
 
